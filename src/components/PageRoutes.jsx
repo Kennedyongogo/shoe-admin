@@ -3,6 +3,7 @@ import { Route, Routes, Navigate } from "react-router-dom";
 import { Box, CircularProgress } from "@mui/material";
 import Navbar from "./Navbar";
 import Dashboard from "../Pages/Dashboard";
+import Shoes from "../Pages/Shoes";
 import Settings from "../Pages/Settings";
 import NotFound from "../Pages/NotFound";
 import { mobileMainPaddingBottom } from "../constants/layout";
@@ -58,6 +59,7 @@ function PageRoutes() {
             <Route path="/" element={<Navigate to="/analytics" replace />} />
             <Route path="home" element={<Navigate to="/analytics" replace />} />
             <Route path="analytics" element={<Dashboard user={user} />} />
+            <Route path="shoes" element={<Shoes />} />
             <Route path="settings" element={<Settings user={user} setUser={setUser} />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

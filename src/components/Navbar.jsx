@@ -4,6 +4,7 @@ import {
   Dashboard,
   Settings,
 } from "@mui/icons-material";
+import ShoeIcon from "./icons/ShoeIcon";
 import { useNavigate, useLocation } from "react-router-dom";
 import { styled, useTheme, alpha } from "@mui/material/styles";
 import MuiDrawer from "@mui/material/Drawer";
@@ -126,6 +127,7 @@ const Drawer = styled(MuiDrawer, {
 
 const navItems = [
   { text: "Dashboard", icon: Dashboard, path: "/analytics" },
+  { text: "Shoes", icon: ShoeIcon, path: "/shoes" },
   { text: "Settings", icon: Settings, path: "/settings" },
 ];
 
@@ -175,6 +177,7 @@ const navButtonSx = (open, active) => ({
 
 const getMobileNavValue = (pathname) => {
   if (pathname === "/settings") return "/settings";
+  if (pathname === "/shoes") return "/shoes";
   if (pathname === "/analytics") return "/analytics";
   return false;
 };
