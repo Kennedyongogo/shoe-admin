@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Box,
   IconButton,
@@ -6,101 +6,81 @@ import {
   MenuItem,
   Typography,
   CircularProgress,
+  Chip,
+  Divider,
   Avatar,
 } from "@mui/material";
 import {
   Menu as MenuIcon,
-  ArrowDropDown as ArrowDropDownIcon,
-  Person as PersonIcon,
-  AccountCircle as AccountCircleIcon,
-  Lock as LockIcon,
-  Logout as LogoutIcon,
+  KeyboardArrowDown,
+  SettingsOutlined,
+  LogoutOutlined,
 } from "@mui/icons-material";
-import UserAccount from "./userAccount";
-import EditUserDetails from "./editUserDetails";
-import ChangePassword from "./changePassword";
 import { useNavigate } from "react-router-dom";
+import { alpha } from "@mui/material/styles";
+import {
+  cream,
+  sageGreen,
+  sageGreenDark,
+  textOnLight,
+  fontBody,
+} from "../../constants/brandColors";
+
+const buildImageUrl = (path) => {
+  if (!path) return "";
+  if (path.startsWith("http")) return path;
+  return path.startsWith("/") ? path : `/${path}`;
+};
 
 const LoadingScreen = () => (
   <Box
     sx={{
       position: "fixed",
-      top: 0,
-      left: 0,
-      width: "100%",
-      height: "100%",
+      inset: 0,
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      backgroundColor: "rgba(255, 255, 255, 1)",
-      zIndex: 1300, // Ensure it covers other components
+      bgcolor: cream,
+      zIndex: 1300,
     }}
   >
-    <CircularProgress />
+    <CircularProgress sx={{ color: sageGreenDark }} />
   </Box>
 );
 
-// Helper to build URL for uploaded assets using Vite proxy
-const buildImageUrl = (imageUrl) => {
-  if (!imageUrl) return "";
-  if (imageUrl.startsWith("http")) return imageUrl;
-
-  // Use relative URLs - Vite proxy will handle routing to backend
-  if (imageUrl.startsWith("uploads/")) return `/${imageUrl}`;
-  if (imageUrl.startsWith("/uploads/")) return imageUrl;
-  return imageUrl;
-};
-
-// Helper to get user initials
-const getInitials = (name) => {
-  if (!name) return "U";
-  const parts = name.trim().split(/\s+/);
-  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
-  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
-};
-
-export default function Header(props) {
-  const [currentUser, setCurrentUser] = useState("");
+export default function Header({ user, setUser, handleDrawerOpen, open, isMobile }) {
+  const [currentUser, setCurrentUser] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
-  const [toggleAccount, setToggleAccount] = useState(false);
-  const [toggleEditDetails, setToggleEditDetails] = useState(false);
-  const [toggleChangePass, setToggleChangePass] = useState(false);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    setLoading(true);
-    // Load user from localStorage instead of API call
     const savedUser = localStorage.getItem("user");
     const token = localStorage.getItem("token");
 
     if (savedUser && token) {
       const userData = JSON.parse(savedUser);
       setCurrentUser(userData);
-      props.setUser(userData);
-      setLoading(false);
+      setUser(userData);
     } else {
-      // Redirect to login if no user or token
       window.location.href = "/";
     }
-  }, []);
+    setLoading(false);
+  }, [setUser]);
+
+  useEffect(() => {
+    if (user) setCurrentUser(user);
+  }, [user]);
+
+  const displayUser = user || currentUser;
+  const profileImageUrl = buildImageUrl(displayUser?.profile_image);
 
   const logout = () => {
     localStorage.clear();
     navigate("/");
-    fetch("/api/admin/logout", {
-      method: "GET",
-      credentials: "include",
-    });
   };
 
-  const handleClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
+  const menuOpen = Boolean(anchorEl);
 
   return (
     <>
@@ -109,125 +89,149 @@ export default function Header(props) {
         sx={{
           display: "flex",
           alignItems: "center",
-          justifyContent: "space-between",
-          p: 2,
-          color: "white",
           width: "100%",
+          gap: 1.5,
+          fontFamily: fontBody,
         }}
       >
-        <IconButton
-          aria-label="open drawer"
-          onClick={props.handleDrawerOpen}
-          edge="start"
-          sx={{
-            color: "white",
-            marginRight: 5,
-            ...(props.open && { display: "none" }),
-          }}
-        >
-          <MenuIcon />
-        </IconButton>
+        {!isMobile && (
+          <IconButton
+            aria-label="Open navigation"
+            onClick={handleDrawerOpen}
+            edge="start"
+            sx={{
+              color: cream,
+              bgcolor: alpha("#fff", 0.08),
+              border: `1px solid ${alpha("#fff", 0.12)}`,
+              borderRadius: "12px",
+              ...(open && { display: "none" }),
+              "&:hover": { bgcolor: alpha("#fff", 0.14) },
+            }}
+          >
+            <MenuIcon />
+          </IconButton>
+        )}
 
-        <Box sx={{ flexGrow: 1 }}></Box>
+        <Box sx={{ flexGrow: 1 }} />
 
-        <Box sx={{ display: "flex", alignItems: "center" }}>
-          <Typography variant="body1" sx={{ mr: 1 }}>
-            {currentUser?.full_name}
-          </Typography>
-
-          {/* Profile Picture or Avatar */}
-          <Box sx={{ mr: 1 }}>
-            {currentUser?.profile_image ? (
-              <Avatar
-                src={buildImageUrl(currentUser.profile_image)}
-                alt={currentUser?.full_name}
+        <Chip
+          onClick={(e) => setAnchorEl(e.currentTarget)}
+          icon={
+            <Avatar
+              src={profileImageUrl || undefined}
+              alt={displayUser?.full_name}
+              sx={{
+                width: 28,
+                height: 28,
+                bgcolor: alpha(sageGreenDark, 0.2),
+                color: sageGreenDark,
+                fontSize: "0.75rem",
+                fontWeight: 700,
+              }}
+            >
+              {displayUser?.full_name?.charAt(0)?.toUpperCase() || "A"}
+            </Avatar>
+          }
+          label={
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25, px: 0.5 }}>
+              <Typography
                 sx={{
-                  width: 32,
-                  height: 32,
-                  border: "2px solid rgba(255, 255, 255, 0.3)",
-                  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
+                  fontSize: "0.82rem",
+                  fontWeight: 700,
+                  color: textOnLight,
+                  lineHeight: 1.2,
+                }}
+                noWrap
+              >
+                {displayUser?.full_name || displayUser?.name || "Admin"}
+              </Typography>
+              <KeyboardArrowDown
+                sx={{
+                  fontSize: 20,
+                  color: sageGreenDark,
+                  transition: "transform 0.2s",
+                  transform: menuOpen ? "rotate(180deg)" : "none",
                 }}
               />
-            ) : (
-              <Avatar
-                sx={{
-                  width: 32,
-                  height: 32,
-                  backgroundColor: "rgba(255, 255, 255, 0.2)",
-                  border: "2px solid rgba(255, 255, 255, 0.3)",
-                  color: "white",
-                  fontWeight: "bold",
-                  fontSize: "0.875rem",
-                }}
-              >
-                {getInitials(currentUser?.full_name)}
-              </Avatar>
-            )}
-          </Box>
-
-          <IconButton color="inherit" onClick={handleClick}>
-            <ArrowDropDownIcon />
-          </IconButton>
-        </Box>
+            </Box>
+          }
+          sx={{
+            height: "auto",
+            py: 0.5,
+            pl: 0.5,
+            pr: 1,
+            bgcolor: cream,
+            border: `1px solid ${alpha("#fff", 0.5)}`,
+            boxShadow: `0 4px 16px ${alpha("#000", 0.12)}`,
+            cursor: "pointer",
+            "& .MuiChip-icon": { ml: 0.5 },
+            "&:hover": {
+              bgcolor: alpha(cream, 0.95),
+              boxShadow: `0 6px 20px ${alpha("#000", 0.16)}`,
+            },
+          }}
+        />
 
         <Menu
           anchorEl={anchorEl}
-          open={Boolean(anchorEl)}
-          onClose={handleClose}
+          open={menuOpen}
+          onClose={() => setAnchorEl(null)}
+          transformOrigin={{ horizontal: "right", vertical: "top" }}
+          anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+          slotProps={{
+            paper: {
+              sx: {
+                mt: 1,
+                minWidth: 200,
+                borderRadius: "16px",
+                bgcolor: cream,
+                border: `1px solid ${alpha(sageGreenDark, 0.12)}`,
+                boxShadow: `0 16px 40px ${alpha(sageGreenDark, 0.18)}`,
+                overflow: "hidden",
+              },
+            },
+          }}
         >
-          <MenuItem
-            onClick={() => {
-              setToggleAccount(true);
-              handleClose();
-            }}
-          >
-            <AccountCircleIcon sx={{ mr: 1 }} /> Account
-          </MenuItem>
+          <Box sx={{ px: 2, py: 1.5 }}>
+            <Typography sx={{ fontWeight: 700, fontSize: "0.9rem", color: textOnLight }}>
+              {displayUser?.full_name}
+            </Typography>
+            <Typography sx={{ fontSize: "0.78rem", color: sageGreen }}>
+              {displayUser?.email}
+            </Typography>
+          </Box>
+          <Divider sx={{ borderColor: alpha(sageGreenDark, 0.1) }} />
           <MenuItem
             onClick={() => {
               navigate("/settings");
-              handleClose();
+              setAnchorEl(null);
+            }}
+            sx={{
+              py: 1.25,
+              fontWeight: 600,
+              color: textOnLight,
+              "&:hover": { bgcolor: alpha(sageGreen, 0.1) },
             }}
           >
-            <LockIcon sx={{ mr: 1 }} /> Change Password
+            <SettingsOutlined sx={{ mr: 1.5, fontSize: 20, color: sageGreenDark }} />
+            Settings
           </MenuItem>
           <MenuItem
             onClick={() => {
               logout();
-              handleClose();
+              setAnchorEl(null);
+            }}
+            sx={{
+              py: 1.25,
+              fontWeight: 600,
+              color: "#a63d3d",
+              "&:hover": { bgcolor: alpha("#a63d3d", 0.08) },
             }}
           >
-            <LogoutIcon sx={{ mr: 1 }} /> Logout
+            <LogoutOutlined sx={{ mr: 1.5, fontSize: 20 }} />
+            Logout
           </MenuItem>
         </Menu>
-
-        {currentUser && (
-          <UserAccount
-            onClose={() => {
-              setToggleAccount(false);
-            }}
-            open={toggleAccount}
-            currentUser={currentUser}
-          />
-        )}
-        {currentUser && (
-          <EditUserDetails
-            open={toggleEditDetails}
-            onClose={() => {
-              setToggleEditDetails(false);
-            }}
-            currentUser={currentUser}
-          />
-        )}
-        {currentUser && (
-          <ChangePassword
-            open={toggleChangePass}
-            onClose={() => {
-              setToggleChangePass(false);
-            }}
-            currentUser={currentUser}
-          />
-        )}
       </Box>
     </>
   );
